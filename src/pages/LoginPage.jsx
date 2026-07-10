@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { signIn } from '../services/authService.js';
 import { Button } from '../components/ui/Button.jsx';
 import { ErrorMessage } from '../components/ui/ErrorMessage.jsx';
+import logoImg from '../assets/logo/logo.png';
+import tlsuschool from '../assets/landingpage/tlsuschool.png';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -44,14 +46,30 @@ export const LoginPage = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream-100">
-        <div className="text-forest-950 font-semibold animate-pulse">Loading System...</div>
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=800"
+            alt="The Last Salle University campus quad and main building lobby"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-cream-100/80" />
+        </div>
+        <div className="font-serif text-lg font-bold tracking-tight block leading-tight text-forest-950 animate-pulse relative z-10">Loading System...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-cream-100 p-4 md:p-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
+      <div className="absolute inset-0 z-0">
+        <img
+          src={tlsuschool}
+          alt="The Last Salle University campus quad and main building lobby"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-cream-100/80" />
+      </div>
       <style>{`
         @keyframes fadeInScaleUp {
           from {
@@ -110,12 +128,12 @@ export const LoginPage = () => {
       `}</style>
 
       {/* Decorative Brand Textures */}
-      <div className="absolute top-0 right-0 w-full md:w-1/2 h-full bg-gradient-to-br from-forest-700/10 via-sage-300/10 to-transparent pointer-events-none transform -skew-y-12 origin-top-right scale-y-150 opacity-0 animate-fade-in-scale-up" />
-      <div className="absolute -bottom-48 -left-48 w-96 h-96 rounded-full bg-sage-500/10 blur-3xl pointer-events-none opacity-0 animate-fade-in-simple" />
-      <div className="absolute -top-48 -right-48 w-96 h-96 rounded-full bg-forest-950/10 blur-3xl pointer-events-none opacity-0 animate-fade-in-simple" />
+      <div className="absolute top-0 right-0 w-full md:w-1/2 h-full bg-gradient-to-br from-forest-700/10 via-sage-300/10 to-transparent pointer-events-none transform -skew-y-12 origin-top-right scale-y-150 opacity-0 animate-fade-in-scale-up z-10" />
+      <div className="absolute -bottom-48 -left-48 w-96 h-96 rounded-full bg-sage-500/10 blur-3xl pointer-events-none opacity-0 animate-fade-in-simple z-10" />
+      <div className="absolute -top-48 -right-48 w-96 h-96 rounded-full bg-forest-950/10 blur-3xl pointer-events-none opacity-0 animate-fade-in-simple z-10" />
 
-      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[550px] relative z-10 border border-sage-300/20 opacity-0 animate-fade-in-slide-up">
-        
+      <div className="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[550px] relative z-20 border border-sage-300/20 opacity-0 animate-fade-in-slide-up">
+
         {/* Left Panel: Image Panel (Collapses on Mobile) */}
         <div className="relative md:w-1/2 bg-forest-950 flex flex-col justify-between p-8 text-white min-h-[200px] md:min-h-full">
           <div className="absolute inset-0 z-0">
@@ -130,20 +148,23 @@ export const LoginPage = () => {
 
           <div className="relative z-10 flex flex-col h-full justify-between">
             {/* Institutional Branding */}
-            <div>
-              <span className="font-serif text-lg font-bold tracking-tight block">
-                The Last Salle University
-              </span>
-              <span className="text-[10px] uppercase tracking-widest font-semibold text-sage-300">
-                Evaluation System
-              </span>
+            <div className="flex items-center space-x-3">
+              <img src={logoImg} alt="The Last Salle University Crest" className="h-28 w-28 object-contain" />
+              <div>
+                <span className="font-serif text-lg font-bold tracking-tight block leading-tight">
+                  The Last Salle University
+                </span>
+                <span className="font-serif text-lg font-bold tracking-tight block leading-tight text-sage-300">
+                  Evaluation System
+                </span>
+              </div>
             </div>
 
             <div className="mt-8 md:mt-0">
-              <h2 className="text-xl md:text-3xl font-serif font-bold leading-tight">
+              <h2 className="font-serif text-lg font-bold tracking-tight block leading-tight">
                 Fostering Academic Excellence
               </h2>
-              <p className="text-xs md:text-sm text-sage-300/90 mt-2 max-w-xs leading-relaxed">
+              <p className="font-serif text-lg font-bold tracking-tight block leading-tight text-sage-300/90 mt-2 max-w-xs leading-relaxed">
                 Secure portal for role-based academic evaluations, administrative reviews, and institutional feedback.
               </p>
             </div>
@@ -163,15 +184,26 @@ export const LoginPage = () => {
             </svg>
           </div>
 
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-4 left-4 md:top-6 md:left-6 z-20 flex items-center space-x-2 text-forest-700 hover:text-forest-950 transition-colors duration-200"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span className="font-serif text-lg font-bold tracking-tight block leading-tight">Back</span>
+          </button>
+
           <div className="relative z-10 max-w-sm w-full mx-auto">
             <div className="text-center md:text-left mb-8">
-              <span className="text-[11px] font-bold text-forest-700 uppercase tracking-widest block mb-2">
+              <span className="font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700 mb-2">
                 Internal Access Only
               </span>
-              <h3 className="text-3xl font-extrabold text-forest-950 tracking-tight">
+              <h3 className="font-serif text-3xl font-bold tracking-tight block leading-tight text-forest-950">
                 Welcome Back
               </h3>
-              <p className="text-sm text-forest-700/70 mt-1">
+              <p className="font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700/70 mt-1">
                 Sign in to access the Evaluation System
               </p>
             </div>
@@ -181,13 +213,13 @@ export const LoginPage = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Input */}
               <div className="flex flex-col">
-                <label htmlFor="email" className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-forest-700">
+                <label htmlFor="email" className="mb-1.5 font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700">
                   School Email
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-sage-500">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v2a3 3 0 003 3m0-0V9a2 2 0 00-2-2h-2m-9-5H9M5 8h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                     </svg>
                   </span>
                   <input
@@ -207,7 +239,7 @@ export const LoginPage = () => {
 
               {/* Password Input */}
               <div className="flex flex-col">
-                <label htmlFor="password" className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-forest-700">
+                <label htmlFor="password" className="mb-1.5 font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700">
                   Password
                 </label>
                 <div className="relative">
@@ -252,7 +284,7 @@ export const LoginPage = () => {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full !bg-sage-500 hover:!bg-forest-700 text-white font-semibold py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-150 ease-in-out hover:-translate-y-0.5 active:scale-[0.98] active:duration-100 text-base border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-500/50 focus-visible:ring-offset-2"
+                className="w-full !bg-sage-500 hover:!bg-forest-700 text-white font-serif text-lg font-bold tracking-tight block leading-tight py-3 px-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-150 ease-in-out hover:-translate-y-0.5 active:scale-[0.98] active:duration-100 border-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-sage-500/50 focus-visible:ring-offset-2"
               >
                 {loading ? 'Signing in...' : 'Log In'}
               </Button>

@@ -1,0 +1,262 @@
+import { useState } from 'react';
+import { 
+  User, 
+  Calendar, 
+  Bell, 
+  ShieldCheck, 
+  Save, 
+  CheckCircle2 
+} from 'lucide-react';
+
+export default function AdminSettingsPage() {
+  // 1. Navigation State for Settings Sub-tabs
+  const [activeSubTab, setActiveSubTab] = useState('General');
+
+  // 2. Functional States for General Settings Form
+  const [generalInfo, setGeneralInfo] = useState({
+    universityName: 'The Last Salle University',
+    shortName: 'TLSU',
+    contactEmail: 'admin@tlsu.edu'
+  });
+
+  // 3. Functional States for Display Toggles
+  const [displaySettings, setDisplaySettings] = useState({
+    compactTable: true,
+    showActivityFeed: true
+  });
+
+  // 4. Academic Year Management States
+  const [academicConfig, setAcademicConfig] = useState({
+    activeYear: '2026-2027',
+    activeSemester: '1st Semester'
+  });
+
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Form Input Mutators
+  const handleGeneralChange = (e) => {
+    const { name, value } = e.target;
+    setGeneralInfo(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleToggle = (key) => {
+    setDisplaySettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const triggerSaveFeedback = (e) => {
+    e.preventDefault();
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  // Sub-Navigation Menu Configurations
+  const subNavItems = [
+    { name: 'General', icon: <User size={16} /> },
+    { name: 'Academic Year', icon: <Calendar size={16} /> },
+    { name: 'Notifications', icon: <Bell size={16} /> },
+    { name: 'Security', icon: <ShieldCheck size={16} /> },
+  ];
+
+  return (
+    <div className="space-y-6 text-[#0F2A1D]">
+      {/* Title Layout Header */}
+      <div>
+        <h2 className="text-3xl font-extrabold tracking-tight text-[#0F2A1D]">Settings</h2>
+        <p className="text-xs text-slate-400 font-medium uppercase mt-1 tracking-wider">
+          Configure system environment variables and preferences.
+        </p>
+      </div>
+
+      {/* Primary Structural Left-Nav Layout Frame */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        
+        {/* Left Side: Sub-Tab Navigation Strip */}
+        <nav className="w-full md:w-56 flex flex-col gap-1 shrink-0">
+          {subNavItems.map((item) => {
+            const isSubActive = activeSubTab === item.name;
+            return (
+              <button
+                key={item.name}
+                onClick={() => setActiveSubTab(item.name)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200
+                  ${isSubActive 
+                    ? 'bg-[#0F2A1D] text-white shadow-md' 
+                    : 'text-slate-500 hover:bg-slate-100 hover:text-[#0F2A1D]'
+                  }`}
+              >
+                {item.icon}
+                {item.name}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Right Side: Dynamic Form Dashboard Frame Content */}
+        <div className="flex-1 w-full space-y-6">
+          {activeSubTab === 'General' && (
+            <>
+              {/* Card Window Panel 1: General Information */}
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-5 relative">
+                <div>
+                  <h3 className="text-base font-black text-slate-900 tracking-tight">General Information</h3>
+                </div>
+
+                <form onSubmit={triggerSaveFeedback} className="space-y-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="sm:col-span-2 space-y-2">
+                      <label className="text-slate-400">University Name</label>
+                      <input 
+                        type="text"
+                        name="universityName"
+                        value={generalInfo.universityName}
+                        onChange={handleGeneralChange}
+                        className="w-full text-sm border border-slate-200 bg-slate-50 p-3.5 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-slate-400">Short Name</label>
+                      <input 
+                        type="text"
+                        name="shortName"
+                        value={generalInfo.shortName}
+                        onChange={handleGeneralChange}
+                        className="w-full text-sm border border-slate-200 bg-slate-50 p-3.5 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-slate-400">Contact Email</label>
+                    <input 
+                      type="email"
+                      name="contactEmail"
+                      value={generalInfo.contactEmail}
+                      onChange={handleGeneralChange}
+                      className="w-full text-sm border border-slate-200 bg-slate-50 p-3.5 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all lowercase"
+                    />
+                  </div>
+
+                  {/* Submission Row Actions */}
+                  <div className="flex justify-between items-center pt-2">
+                    <div className="w-2/3">
+                      {saveSuccess && (
+                        <div className="flex items-center gap-2 text-emerald-700 font-black normal-case text-xs animate-in fade-in duration-200">
+                          <CheckCircle2 size={16} className="stroke-[2.5]" /> Changes saved successfully.
+                        </div>
+                      )}
+                    </div>
+                    <button 
+                      type="submit"
+                      className="flex items-center gap-2 bg-[#0F2A1D] text-[#E3EED4] text-xs font-black uppercase tracking-widest px-6 py-3.5 rounded-2xl hover:bg-[#375534] transition-all shadow-sm active:scale-[0.98]"
+                    >
+                      <Save size={14} /> Save Changes
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Card Window Panel 2: Display Settings */}
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-base font-black text-slate-900 tracking-tight">Display Settings</h3>
+                </div>
+
+                <div className="divide-y divide-slate-100 text-xs font-bold">
+                  {/* Compact Toggle Row */}
+                  <div className="flex justify-between items-center pb-4">
+                    <div className="space-y-0.5 max-w-[80%]">
+                      <p className="text-sm font-bold text-slate-800 tracking-tight">Compact Table View</p>
+                      <p className="text-slate-400 font-medium">Show more rows per page in data tables.</p>
+                    </div>
+                    <button 
+                      onClick={() => handleToggle('compactTable')}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none shrink-0
+                        ${displaySettings.compactTable ? 'bg-[#0F2A1D]' : 'bg-slate-200'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform duration-200
+                        ${displaySettings.compactTable ? 'right-1' : 'left-1'}`} 
+                      />
+                    </button>
+                  </div>
+
+                  {/* Activity Feed Toggle Row */}
+                  <div className="flex justify-between items-center pt-4">
+                    <div className="space-y-0.5 max-w-[80%]">
+                      <p className="text-sm font-bold text-slate-800 tracking-tight">Show Activity Feed</p>
+                      <p className="text-slate-400 font-medium">Display the live activity feed on the dashboard.</p>
+                    </div>
+                    <button 
+                      onClick={() => handleToggle('showActivityFeed')}
+                      className={`w-11 h-6 rounded-full transition-colors duration-200 relative focus:outline-none shrink-0
+                        ${displaySettings.showActivityFeed ? 'bg-[#0F2A1D]' : 'bg-slate-200'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-transform duration-200
+                        ${displaySettings.showActivityFeed ? 'right-1' : 'left-1'}`} 
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeSubTab === 'Academic Year' && (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">Academic Year & Term Configuration</h3>
+              <div className="space-y-3 max-w-sm text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <div className="space-y-1.5">
+                  <label className="text-slate-400">Target Academic Scope</label>
+                  <input 
+                    type="text" 
+                    value={academicConfig.activeYear}
+                    onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeYear: e.target.value }))}
+                    className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-slate-400">Current active Semester</label>
+                  <select 
+                    value={academicConfig.activeSemester}
+                    onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeSemester: e.target.value }))}
+                    className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none"
+                  >
+                    <option value="1st Semester">1st Semester</option>
+                    <option value="2nd Semester">2nd Semester</option>
+                    <option value="Summer Term">Summer Term</option>
+                  </select>
+                </div>
+                <button 
+                  onClick={triggerSaveFeedback}
+                  className="bg-[#0F2A1D] text-[#E3EED4] text-[11px] px-4 py-2.5 rounded-xl uppercase tracking-wider hover:bg-[#375534] transition-colors mt-2"
+                >
+                  Save Academic Framework
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activeSubTab === 'Notifications' && (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">Notification Channels</h3>
+              <p className="text-xs text-slate-400 font-medium mt-1">Manage institutional email routing and system webhook despatches.</p>
+              <div className="mt-4 p-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 text-center text-xs font-bold uppercase text-slate-400 tracking-wider">
+                Alert dispatcher profiles are functioning.
+              </div>
+            </div>
+          )}
+
+          {activeSubTab === 'Security' && (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">Security & Governance</h3>
+              <p className="text-xs text-slate-400 font-medium mt-1">Configure administrator key rotations and access criteria validation protocols.</p>
+              <div className="mt-4 p-4 border border-dashed border-slate-200 rounded-2xl bg-slate-50 text-center text-xs font-bold uppercase text-slate-400 tracking-wider">
+                Cryptographic signature scopes are locked.
+              </div>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}

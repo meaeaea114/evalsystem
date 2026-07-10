@@ -200,7 +200,7 @@ const LoginPage = () => {
               <h3 className="font-serif text-3xl font-bold tracking-tight block leading-tight text-forest-950">
                 Welcome Back
               </h3>
-              <p className="font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700/70 mt-1">
+              <p className="font-serif text-md font-bold tracking-tight block leading-tight text-forest-700/70 mt-1">
                 Sign in to access the Evaluation System
               </p>
             </div>

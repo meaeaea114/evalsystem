@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
-import { LandingPage } from './pages/LandingPage.jsx';
-import { LoginPage } from './pages/LoginPage.jsx';
+import { LandingPage } from './pages/landingpage/LandingPage.jsx';
+import { LoginPage } from './pages/login/LoginPage.jsx';
 import { AdminDashboard } from './pages/admin/AdminDashboard.jsx';
-import { NotFound } from './pages/NotFound.jsx';
+import { NotFound } from './pages/error/NotFound.jsx';
+
 
 // Import your newly separated pages
 import AdminDashboardView from './pages/admin/dashboard/index.jsx';
@@ -20,8 +21,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          
+          <Route path="login/login" element={<LoginPage />} />
+
           {/* Admin layout with structural sub-routes nested inside */}
           <Route
             path="/admin"
@@ -41,8 +42,8 @@ function App() {
             <Route path="settings" element={<AdminSettingsView />} />
           </Route>
 
-          <Route path="/404" element={<NotFound />} />
-          <Route path="*" element={<Navigate to="/404" replace />} />
+          <Route path="error/404" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/error/404" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

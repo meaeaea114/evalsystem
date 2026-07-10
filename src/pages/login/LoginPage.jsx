@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import { signIn } from '../services/authService.js';
-import { Button } from '../components/ui/Button.jsx';
-import { ErrorMessage } from '../components/ui/ErrorMessage.jsx';
-import logoImg from '../assets/logo/logo.png';
-import tlsuschool from '../assets/landingpage/tlsuschool.png';
+import { useAuth } from '../../context/AuthContext.jsx';
+import { signIn } from '../../services/authService.js';
+import { Button } from '../../components/ui/Button.jsx';
+import { ErrorMessage } from '../../components/ui/ErrorMessage.jsx';
+import logoImg from '../../assets/logo/logo.png';
+import tlsuschool from '../../assets/landingpage/tlsuschool.png';
 
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -197,9 +197,6 @@ export const LoginPage = () => {
 
           <div className="relative z-10 max-w-sm w-full mx-auto">
             <div className="text-center md:text-left mb-8">
-              <span className="font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700 mb-2">
-                Internal Access Only
-              </span>
               <h3 className="font-serif text-3xl font-bold tracking-tight block leading-tight text-forest-950">
                 Welcome Back
               </h3>
@@ -213,7 +210,7 @@ export const LoginPage = () => {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Email Input */}
               <div className="flex flex-col">
-                <label htmlFor="email" className="mb-1.5 font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700">
+                <label htmlFor="email" className="mb-1.5 font-serif text-sm font-bold tracking-tight block leading-tight text-forest-700">
                   School Email
                 </label>
                 <div className="relative">
@@ -239,7 +236,7 @@ export const LoginPage = () => {
 
               {/* Password Input */}
               <div className="flex flex-col">
-                <label htmlFor="password" className="mb-1.5 font-serif text-lg font-bold tracking-tight block leading-tight text-forest-700">
+                <label htmlFor="password" className="mb-1.5 font-serif text-sm font-bold tracking-tight block leading-tight text-forest-700">
                   Password
                 </label>
                 <div className="relative">

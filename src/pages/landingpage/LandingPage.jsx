@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../components/ui/Button.jsx';
-import logoImg from '../assets/logo/logo.png';
-import flagceremony from '../assets/landingpage/flagceremony.png';
-import tlsuschool from '../assets/landingpage/tlsuschool.png';
+import { Button } from '../../components/ui/Button.jsx';
+import logoImg from '../../assets/logo/logo.png';
+import flagceremony from '../../assets/landingpage/flagceremony.png';
+import tlsuschool from '../../assets/landingpage/tlsuschool.png';
 
 
 // Nav items mapped to section IDs
@@ -194,7 +194,7 @@ export const LandingPage = () => {
 
             {/* Desktop CTA */}
             <div className="hidden md:block">
-              <Link to="/login">
+              <Link to="login/login">
                 <Button className="!bg-sage-500 hover:!bg-forest-700 text-white text-sm font-bold py-2.5 px-5 rounded-lg border-0 shadow-md hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-150">
                   Login
                 </Button>
@@ -245,7 +245,7 @@ export const LandingPage = () => {
               );
             })}
             <div className="pt-2">
-              <Link to="/login" className="block w-full" onClick={() => setMobileMenuOpen(false)}>
+              <Link to="login/login" className="block w-full" onClick={() => setMobileMenuOpen(false)}>
                 <Button className="w-full !bg-sage-500 hover:!bg-forest-700 text-white font-bold py-2.5 px-4 rounded-lg border-0 shadow-md">
                   Login
                 </Button>

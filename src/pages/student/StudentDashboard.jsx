@@ -1,10 +1,22 @@
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Button } from '../../components/ui/Button.jsx';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useState } from 'react';
-import { LogOut, X } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  BookOpen, 
+  ClipboardCheck, 
+  FileText, 
+  User, 
+  LogOut,
+  Search,
+  X
+} from 'lucide-react';
+// Imports the logo/seal image file dynamically from your direct subdirectory folder
+import universityLogo from '../../assets/logo/logo.png';
 
 const StudentDashboard = () => {
   const { signOut } = useAuth();
+  const location = useLocation();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleSignOut = async () => {
@@ -20,16 +32,99 @@ const StudentDashboard = () => {
     setShowLogoutModal(false);
   };
 
+  const menuItems = [
+    { name: 'Dashboard', path: '/student/dashboard', icon: <LayoutDashboard size={18} /> },
+    { name: 'Assigned Subjects', path: '/student/assigned-subjects', icon: <BookOpen size={18} /> },
+    { name: 'Evaluation Results', path: '/student/evaluation-results', icon: <ClipboardCheck size={18} /> },
+    { name: 'Reports', path: '/student/reports', icon: <FileText size={18} /> },
+    { name: 'Profile', path: '/student/profile', icon: <User size={18} /> },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Student Dashboard</h1>
-          <Button onClick={handleSignOut}>Sign Out</Button>
+    <div className="min-h-screen bg-[#f8faf7] flex flex-col font-sans antialiased text-slate-800">
+      
+      {/* Top Header Navigation */}
+      <header className="h-16 bg-white border-b border-slate-100 sticky top-0 z-40 px-6 flex items-center justify-between shadow-xs">
+        {/* Logo identity section linking to imported image asset */}
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+            <img 
+              src={universityLogo} 
+              alt="The Last Salle University Seal" 
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.parentNode.innerHTML = `<div class="text-xs font-black text-[#0F2A1D]">TLSU</div>`;
+              }}
+            />
+          </div>
+          <div className="leading-tight">
+            <h1 className="text-sm font-black tracking-tight text-[#0F2A1D]">The Last Salle</h1>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">University</p>
+          </div>
         </div>
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <p className="text-gray-600 text-lg">Coming Soon</p>
+
+        {/* Global Context Search Box */}
+        <div className="hidden md:flex items-center relative w-80">
+          <Search className="absolute left-3.5 text-slate-400" size={14} />
+          <input 
+            type="text" 
+            placeholder="Search resources..." 
+            className="w-full bg-[#f4f7f3] border border-transparent text-xs pl-10 pr-4 py-2 rounded-xl focus:outline-none focus:ring-1 focus:ring-[#375534]/30 focus:bg-white transition-all text-slate-800 font-medium placeholder-slate-400"
+          />
         </div>
+
+        {/* Operational Profile Utilities without the Notification Bell component */}
+        <div className="flex items-center gap-3">
+          <div className="text-right leading-none hidden sm:block">
+            <p className="text-xs font-black text-slate-900">John Bautista</p>
+            <p className="text-[10px] font-bold text-slate-400 font-mono tracking-tight mt-1">TLSU-2023-00147</p>
+          </div>
+          <div className="w-9 h-9 rounded-full bg-slate-100 text-slate-600 border border-slate-200 font-bold text-xs flex items-center justify-center shadow-2xs">
+            J
+          </div>
+        </div>
+      </header>
+
+      {/* Workspace Structure */}
+      <div className="flex-1 flex w-full">
+        <aside className="w-64 bg-white border-r border-slate-100 flex flex-col justify-between p-4 shrink-0">
+          <nav className="space-y-1">
+            {menuItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.name}
+                  to={item.path}
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-2xl text-xs font-bold tracking-wide transition-all duration-150
+                    ${isActive
+                      ? 'bg-[#0F2A1D] text-white shadow-sm'
+                      : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                >
+                  <span className={isActive ? 'text-white' : 'text-slate-400'}>
+                    {item.icon}
+                  </span>
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="pt-3 border-t border-slate-100">
+            <button 
+              onClick={handleSignOut} 
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all group"
+            >
+              <LogOut size={18} className="text-slate-400 group-hover:text-rose-500" />
+              Sign Out
+            </button>
+          </div>
+        </aside>
+
+        <main className="flex-1 overflow-y-auto p-8 max-h-[calc(100vh-4rem)]">
+          <Outlet />
+        </main>
       </div>
 
       {/* Logout Confirmation Modal */}

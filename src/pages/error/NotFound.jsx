@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '../../components/ui/Button.jsx';
 
-export const NotFound = () => {
+const NotFound = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
@@ -14,3 +14,5 @@ export const NotFound = () => {
     </div>
   );
 };
+
+export default NotFound;

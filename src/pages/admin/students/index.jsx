@@ -1,28 +1,40 @@
-import { useState } from 'react';
-import { UserPlus, Search, Filter, Edit3, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { UserPlus, Search, Filter, Edit3, Trash2, X, Loader2 } from 'lucide-react';
+import { studentService } from '../../../services/studentService';
 
 export default function AdminStudentsPage() {
-  // 1. Core State Management for Students Directory
-  const [students, setStudents] = useState([
-    { id: 'TLSU-2021-0001', name: 'Maria Santos', email: 'm.santos@tlsu.edu.ph', course: 'BSCS', year: '4', status: 'active' },
-    { id: 'TLSU-2021-0002', name: 'Juan Dela Cruz', email: 'j.delacruz@tlsu.edu.ph', course: 'BSIT', year: '4', status: 'active' },
-    { id: 'TLSU-2022-0003', name: 'Ana Reyes', email: 'a.reyes@tlsu.edu.ph', course: 'BSBA', year: '3', status: 'active' },
-    { id: 'TLSU-2022-0004', name: 'Carlos Lim', email: 'c.lim@tlsu.edu.ph', course: 'BSN', year: '3', status: 'active' },
-    { id: 'TLSU-2022-0005', name: 'Sofia Tan', email: 's.tan@tlsu.edu.ph', course: 'BSED', year: '3', status: 'active' },
-    { id: 'TLSU-2023-0006', name: 'Miguel Garcia', email: 'm.garcia@tlsu.edu.ph', course: 'BSCS', year: '2', status: 'active' },
-    { id: 'TLSU-2023-0007', name: 'Isabella Fernandez', email: 'i.fernandez@tlsu.edu.ph', course: 'BSA', year: '2', status: 'active' },
-    { id: 'TLSU-2023-0008', name: 'Rafael Cruz', email: 'r.cruz@tlsu.edu.ph', course: 'BSIT', year: '2', status: 'active' }
-  ]);
-
-  // 2. Structural Filters and Query States
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // 3. Form and Modal Interaction States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({ id: '', name: '', email: '', course: 'BSIT', year: '1', status: 'active' });
 
-  // 4. Functional Actions
+  useEffect(() => {
+    let active = true;
+    const loadStudents = async () => {
+      try {
+        setLoading(true);
+        const data = await studentService.getAllStudents();
+        if (active) {
+          setStudents(data);
+        }
+      } catch (error) {
+        console.error('Failed to load students:', error);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    void loadStudents();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const openAddModal = () => {
     setEditingStudent(null);
     setFormData({ id: '', name: '', email: '', course: 'BSIT', year: '1', status: 'active' });
@@ -31,52 +43,114 @@ export default function AdminStudentsPage() {
 
   const openEditModal = (student) => {
     setEditingStudent(student.id);
-    setFormData({ ...student });
+    setFormData({
+      id: student.studentId || student.id || '',
+      name: student.name || '',
+      email: student.email || '',
+      course: student.program || student.course || 'BSIT',
+      year: student.year || '1',
+      status: student.status || 'active'
+    });
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you certain you want to remove this student entry from the directory?')) {
-      setStudents(students.filter(student => student.id !== id));
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you certain you want to remove this student entry from the directory?')) {
+      return;
+    }
+
+    try {
+      await studentService.deleteStudentProfile(id);
+      setStudents((prev) => prev.filter((student) => student.id !== id));
+    } catch (error) {
+      console.error('Failed to delete student:', error);
+      alert('Unable to delete the selected student.');
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingStudent) {
-      // Execute Edit Update logic
-      setStudents(students.map(student => student.id === editingStudent ? formData : student));
-    } else {
-      // Execute Create Entry logic
-      if (students.some(student => student.id === formData.id)) {
-        alert('This Student Number is already taken.');
-        return;
-      }
-      setStudents([...students, formData]);
+    if (!formData.id || !formData.name || !formData.email) {
+      alert('Please complete the required student information.');
+      return;
     }
-    setIsModalOpen(false);
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        studentId: formData.id,
+        id: formData.id,
+        name: formData.name,
+        email: formData.email,
+        program: formData.course,
+        course: formData.course,
+        year: formData.year,
+        yearSection: `${formData.year}${['1', '2', '3', '4'].includes(formData.year) ? ['st', 'nd', 'rd', 'th'][Number(formData.year) - 1] : 'th'} Year`,
+        status: formData.status,
+        createdAt: new Date().toISOString()
+      };
+
+      if (editingStudent) {
+        await studentService.updateStudentProfile(editingStudent, payload);
+        setStudents((prev) => prev.map((student) => (
+          student.id === editingStudent
+            ? { ...student, ...payload, id: editingStudent }
+            : student
+        )));
+      } else {
+        const exists = students.some((student) =>
+          (student.studentId || student.id) === formData.id
+        );
+        if (exists) {
+          alert('This Student Number is already taken.');
+          return;
+        }
+
+        const created = await studentService.createStudentProfile(formData.id, payload);
+        setStudents((prev) => [created, ...prev]);
+      }
+
+      setIsModalOpen(false);
+      setFormData({ id: '', name: '', email: '', course: 'BSIT', year: '1', status: 'active' });
+    } catch (error) {
+      console.error('Failed to save student:', error);
+      alert('Unable to save the student record.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // 5. Query Filtering Logic
-  const filteredStudents = students.filter(student => 
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.course.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = students.filter((student) => {
+    const search = searchQuery.toLowerCase();
+    return (
+      (student.name || '').toLowerCase().includes(search) ||
+      (student.studentId || student.id || '').toLowerCase().includes(search) ||
+      (student.program || student.course || '').toLowerCase().includes(search)
+    );
+  });
+
+  const getInitials = (name = '') => name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'S';
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64 text-[#375534]">
+        <Loader2 className="animate-spin" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-[#0F2A1D]">
-      {/* Header View */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-[#0F2A1D]">Students</h2>
         </div>
-        <button 
+        <button
           onClick={openAddModal}
           className="flex items-center gap-2 bg-[#0F2A1D] text-[#E3EED4] text-xs font-bold uppercase tracking-wider px-5 py-3.5 rounded-2xl hover:bg-[#375534] transition-all shadow-sm active:scale-[0.98]"
         >
@@ -84,15 +158,14 @@ export default function AdminStudentsPage() {
         </button>
       </div>
 
-      {/* Control Actions Panel */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-4 top-3.5 text-slate-400" size={18} />
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search students by name or ID..." 
+            placeholder="Search students by name or ID..."
             className="w-full bg-slate-50 border border-slate-200 text-sm pl-12 pr-4 py-3.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all text-slate-800 placeholder-slate-400 font-medium"
           />
         </div>
@@ -101,7 +174,6 @@ export default function AdminStudentsPage() {
         </button>
       </div>
 
-      {/* Premium Table Registry */}
       <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -122,31 +194,31 @@ export default function AdminStudentsPage() {
                     <td className="p-4 pl-6">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-[#375534]/10 text-[#375534] font-black text-[11px] flex items-center justify-center uppercase shrink-0">
-                          {student.name.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                          {getInitials(student.name)}
                         </div>
                         <div>
-                          <p className="font-extrabold text-slate-900 transition-colors">{student.name}</p>
-                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">{student.email}</p>
+                          <p className="font-extrabold text-slate-900 transition-colors">{student.name || 'Unnamed Student'}</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">{student.email || '-'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 font-mono text-slate-500 tracking-tight">{student.id}</td>
-                    <td className="p-4 text-slate-900 font-extrabold">{student.course}</td>
-                    <td className="p-4 text-slate-600 font-extrabold pl-6">{student.year}</td>
+                    <td className="p-4 font-mono text-slate-500 tracking-tight">{student.studentId || student.id}</td>
+                    <td className="p-4 text-slate-900 font-extrabold">{student.program || student.course || '—'}</td>
+                    <td className="p-4 text-slate-600 font-extrabold pl-6">{student.year || '—'}</td>
                     <td className="p-4">
                       <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">
-                        {student.status}
+                        {student.status || 'active'}
                       </span>
                     </td>
                     <td className="p-4 pr-6 text-right">
                       <div className="flex items-center justify-end gap-1.5 opacity-40 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={() => openEditModal(student)}
                           className="p-2 text-slate-500 hover:text-[#0F2A1D] hover:bg-slate-100 rounded-xl transition-all"
                         >
                           <Edit3 size={15} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDelete(student.id)}
                           className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                         >
@@ -168,11 +240,9 @@ export default function AdminStudentsPage() {
         </div>
       </div>
 
-      {/* 6. Context Add/Edit Overlay Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-[#0F2A1D]/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Modal Header */}
             <div className="bg-[#0F2A1D] text-[#E3EED4] p-5 flex justify-between items-center">
               <h3 className="text-sm font-black uppercase tracking-wider">
                 {editingStudent ? 'Edit Student Configuration' : 'Register New Student Profile'}
@@ -182,44 +252,43 @@ export default function AdminStudentsPage() {
               </button>
             </div>
 
-            {/* Modal Form */}
             <form onSubmit={handleSubmit} className="p-6 space-y-4 text-xs font-bold text-slate-600">
               <div>
                 <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Student Number</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="id"
                   required
                   disabled={!!editingStudent}
                   value={formData.id}
                   onChange={handleInputChange}
-                  placeholder="e.g., TLSU-2026-0001" 
+                  placeholder="e.g., TLSU-2026-0001"
                   className="w-full border border-slate-200 bg-slate-50 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all text-slate-800 disabled:opacity-50 disabled:bg-slate-100"
                 />
               </div>
 
               <div>
                 <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Full Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   name="name"
                   required
                   value={formData.name}
                   onChange={handleInputChange}
-                  placeholder="e.g., Maria Santos" 
+                  placeholder="e.g., Maria Santos"
                   className="w-full border border-slate-200 bg-slate-50 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all text-slate-800"
                 />
               </div>
 
               <div>
                 <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Institutional Email</label>
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   name="email"
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  placeholder="e.g., m.santos@tlsu.edu.ph" 
+                  placeholder="e.g., m.santos@tlsu.edu.ph"
                   className="w-full border border-slate-200 bg-slate-50 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#375534]/20 focus:bg-white transition-all text-slate-800"
                 />
               </div>
@@ -227,7 +296,7 @@ export default function AdminStudentsPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Program</label>
-                  <select 
+                  <select
                     name="course"
                     value={formData.course}
                     onChange={handleInputChange}
@@ -244,7 +313,7 @@ export default function AdminStudentsPage() {
 
                 <div>
                   <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Year Level</label>
-                  <select 
+                  <select
                     name="year"
                     value={formData.year}
                     onChange={handleInputChange}
@@ -260,7 +329,7 @@ export default function AdminStudentsPage() {
 
               <div>
                 <label className="block uppercase tracking-wider mb-1.5 text-slate-400">Status</label>
-                <select 
+                <select
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
@@ -272,18 +341,19 @@ export default function AdminStudentsPage() {
               </div>
 
               <div className="pt-3 flex justify-end gap-2">
-                <button 
+                <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   className="bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl hover:bg-slate-200 transition-all"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
-                  className="bg-[#0F2A1D] text-[#E3EED4] px-5 py-2.5 rounded-xl hover:bg-[#375534] transition-all"
+                  disabled={isSubmitting}
+                  className="bg-[#0F2A1D] text-[#E3EED4] px-5 py-2.5 rounded-xl hover:bg-[#375534] transition-all disabled:opacity-60"
                 >
-                  {editingStudent ? 'Save Changes' : 'Register Entry'}
+                  {isSubmitting ? <Loader2 className="animate-spin" size={16} /> : (editingStudent ? 'Save Changes' : 'Register Entry')}
                 </button>
               </div>
             </form>

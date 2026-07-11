@@ -1,19 +1,49 @@
-import { useState } from 'react';
-import { Download, Award, FileText } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Download, Award, FileText, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { studentService } from '../../../services/studentService';
 
 export default function StudentEvaluationResultsPage() {
-  // 1. Core Summary Metrics States
-  const [metrics] = useState({
-    cumulativeGpa: '3.84',
-    totalCredits: 117
-  });
+  const { user } = useAuth();
+  const [metrics, setMetrics] = useState({ cumulativeGpa: '-', totalCredits: 0 });
+  const [evaluations, setEvaluations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // 2. Evaluation Records State matching your screenshot exactly
-  const [evaluations] = useState([
-    { date: 'Jul 2026', subject: 'Operating Systems', grade: '-', remarks: 'Awaiting faculty submission', status: 'Pending' },
-    { date: 'Jun 2026', subject: 'Database Management Systems', grade: '1.8', remarks: 'Strong performance in final project', status: 'Passed' },
-    { date: 'Jun 2026', subject: 'Data Structures & Algorithms', grade: '1.3', remarks: 'Excellent grasp of core concepts', status: 'Excellent' }
-  ]);
+  useEffect(() => {
+    const fetchRecords = async () => {
+      if (!user?.uid) return;
+      try {
+        setLoading(true);
+        const { completedHistory } = await studentService.getAcademicRecords(user.uid);
+        const passedCount = completedHistory.filter((record) => record.status === 'Passed' || record.status === 'Excellent').length;
+        setMetrics({
+          cumulativeGpa: passedCount > 0 ? (passedCount / Math.max(completedHistory.length, 1)).toFixed(2) : '-',
+          totalCredits: completedHistory.length * 3
+        });
+        setEvaluations(completedHistory.map((record) => ({
+          date: record.assignedDate ? new Date(record.assignedDate).toLocaleDateString() : 'N/A',
+          subject: record.subjectCode,
+          grade: record.grade || '-',
+          remarks: record.remarks || 'Recorded from evaluation',
+          status: record.status
+        })));
+      } catch (error) {
+        console.error('Failed to load evaluation results', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecords();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="animate-spin text-[#375534]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-[#0F2A1D]">

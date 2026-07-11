@@ -1,28 +1,69 @@
-import { useState } from 'react';
-import { Printer, Download } from 'lucide-react';
-import universitySeal from '/src/assets/logo/logo.png';
+import { useEffect, useState } from 'react';
+import { Printer, Download, Loader2 } from 'lucide-react';
+import universitySeal from '../../../assets/logo/logo.png';
+import { useAuth } from '../../../context/AuthContext';
+import { studentService } from '../../../services/studentService';
 
 export default function StudentReportsPage() {
-  const reportMetadata = {
-    dateIssued: '7/10/2026',
-    studentName: 'John Bautista',
-    studentNumber: 'TLSU-2023-00147',
-    program: 'BS Computer Science',
-    yearSection: '3rd Year - BSCS-3B',
+  const { user, profile } = useAuth();
+  const [reportMetadata, setReportMetadata] = useState({
+    dateIssued: new Date().toLocaleDateString(),
+    studentName: 'Student',
+    studentNumber: '',
+    program: 'BSIT',
+    yearSection: '1st Year',
     academicYear: '2025-2026',
     semester: '1st Semester',
-    gwa: '3.84'
-  };
+    gwa: '-'
+  });
+  const [evaluationRecords, setEvaluationRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const evaluationRecords = [
-    { code: 'CS310', name: 'Operating Systems', units: 3, grade: 'INC', remarks: 'AWAITING FACULTY SUBMISSION' },
-    { code: 'CS305', name: 'Database Management Systems', units: 3, grade: '1.8', remarks: 'STRONG PERFORMANCE IN FINAL PROJECT' },
-    { code: 'CS301', name: 'Data Structures & Algorithms', units: 3, grade: '1.3', remarks: 'EXCELLENT GRASP OF CORE CONCEPTS' }
-  ];
+  useEffect(() => {
+    const fetchReports = async () => {
+      if (!user?.uid) return;
+      try {
+        setLoading(true);
+        const { currentSubjects, completedHistory } = await studentService.getAcademicRecords(user.uid);
+        const records = [...currentSubjects, ...completedHistory].map((record) => ({
+          code: record.subjectCode,
+          name: record.subjectCode,
+          units: 3,
+          grade: record.grade || (record.status === 'Assigned' ? 'PENDING' : '-'),
+          remarks: record.remarks || record.status
+        }));
+        setEvaluationRecords(records);
+        setReportMetadata((prev) => ({
+          ...prev,
+          studentName: profile?.name || user.displayName || 'Student',
+          studentNumber: profile?.studentId || profile?.id || user.uid,
+          program: profile?.program || profile?.course || 'BSIT',
+          yearSection: profile?.yearSection || `${profile?.year || '1'}st Year`,
+          academicYear: profile?.academicYear || '2025-2026',
+          semester: profile?.semester || '1st Semester',
+          gwa: records.length > 0 ? (records.filter((record) => record.grade && record.grade !== 'PENDING' && record.grade !== '-').length / Math.max(records.length, 1)).toFixed(2) : '-'
+        }));
+      } catch (error) {
+        console.error('Failed to load reports', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, [profile, user]);
 
   const triggerPrint = () => {
     window.print();
   };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="animate-spin text-[#375534]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-[#0F2A1D] max-w-[1000px] mx-auto antialiased">
@@ -66,7 +107,7 @@ export default function StudentReportsPage() {
           {/* Premium University Stamp Seal Graphic Integration */}
           <div className="w-24 h-24 rounded-full border border-slate-200/100 p-1 flex items-center justify-center overflow-hidden shrink-0 bg-slate-50 shadow-2xs self-center sm:self-start">
             <img 
-              src="/src/assets/logo/logo.png" 
+              src={universitySeal} 
               alt="The Last Salle University Seal" 
               className="w-full h-full object-contain brightness-105 contrast-105"
               onError={(e) => {

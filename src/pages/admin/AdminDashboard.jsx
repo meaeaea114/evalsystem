@@ -49,7 +49,7 @@ const AdminDashboard = () => {
       <header className="h-16 bg-white border-b border-slate-100 sticky top-0 z-40 px-6 flex items-center justify-between shadow-xs">
         {/* Logo and Brand Title Identity */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center overflow-hidden">
+          <div className="w-18 h-18 flex items-center justify-center overflow-hidden">
             <img
               src={universitySeal}
               alt="The Last Salle University Logo"
@@ -62,8 +62,8 @@ const AdminDashboard = () => {
           </div>
 
           <div className="leading-tight">
-            <h1 className="text-sm font-black tracking-tight text-[#0F2A1D]">The Last Salle</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">University</p>
+            <h1 className="font-serif text-lg font-bold tracking-tight block leading-tight text-[#0F2A1D]">The Last Salle</h1>
+            <p className="font-serif text-lg font-bold tracking-tight block leading-tight text-slate-400 uppercase tracking-widest -mt-0.5">University</p>
           </div>
         </div>
 

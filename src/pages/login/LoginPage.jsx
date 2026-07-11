@@ -34,7 +34,7 @@ const LoginPage = () => {
       await signIn(email, password);
       // After successful sign-in, AuthContext will handle role fetching and redirect
     } catch (err) {
-      setError(err.message || 'Failed to sign in. Please check your credentials.');
+      setError('Failed to sign in. Please check your email and password.');
       setLoading(false);
     }
   };

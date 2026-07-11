@@ -2,38 +2,27 @@ import { db } from './firebase';
 import { collection, query, where, getDocs, doc, writeBatch } from 'firebase/firestore';
 
 export const evaluationService = {
-  
-  // 1. Fetch ALL evaluations for the table
   getAllEvaluations: async () => {
     const evalRef = collection(db, 'evaluations');
     const snapshot = await getDocs(evalRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((document) => ({ id: document.id, ...document.data() }));
   },
 
-  // 2. NEW: Calculate what a student is allowed to take
   getEligibleSubjectsForStudent: async (studentId) => {
-    // A. Get all subjects in the curriculum
     const subjectsSnap = await getDocs(collection(db, 'subjects'));
-    const allSubjects = subjectsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allSubjects = subjectsSnap.docs.map((document) => ({ id: document.id, ...document.data() }));
 
-    // B. Get student's current and past records
-    const evalsSnap = await getDocs(query(collection(db, 'evaluations'), where("studentId", "==", studentId)));
-    const allEvals = evalsSnap.docs.map(doc => doc.data());
-    
-    // C. Separate passed subjects from currently active/failed ones
-    const passedCodes = allEvals.filter(e => e.status === 'Passed').map(e => e.subjectCode);
-    const activeCodes = allEvals.filter(e => ['Assigned', 'Pending Pre-req'].includes(e.status)).map(e => e.subjectCode);
+    const evalsSnap = await getDocs(query(collection(db, 'evaluations'), where('studentId', '==', studentId)));
+    const allEvals = evalsSnap.docs.map((document) => document.data());
 
-    // D. Filter down to ONLY eligible subjects
-    const eligibleSubjects = allSubjects.filter(subject => {
-      // Skip if they already passed it, or are currently taking it
+    const passedCodes = allEvals.filter((entry) => entry.status === 'Passed').map((entry) => entry.subjectCode);
+    const activeCodes = allEvals.filter((entry) => ['Assigned', 'Pending Pre-req'].includes(entry.status)).map((entry) => entry.subjectCode);
+
+    const eligibleSubjects = allSubjects.filter((subject) => {
       if (passedCodes.includes(subject.id) || activeCodes.includes(subject.id)) return false;
-      
-      // Check prerequisites
+
       const reqs = subject.prerequisites || [];
-      const missing = reqs.filter(req => !passedCodes.includes(req));
-      
-      // They are eligible if they are missing ZERO prerequisites
+      const missing = reqs.filter((req) => !passedCodes.includes(req));
       return missing.length === 0;
     });
 
@@ -43,23 +32,25 @@ export const evaluationService = {
     };
   },
 
-  // 3. NEW: Dispatch multiple eligible subjects at once
   dispatchMultipleAssignments: async (studentId, subjectCodes) => {
     const batch = writeBatch(db);
     const timestamp = new Date().toISOString();
 
-    subjectCodes.forEach(code => {
+    subjectCodes.forEach((code) => {
       const evalRef = doc(collection(db, 'evaluations'));
       batch.set(evalRef, {
         studentId,
         subjectCode: code,
         status: 'Assigned',
         assignedDate: timestamp,
-        missingPrerequisites: []
+        missingPrerequisites: [],
+        isManualEntry: false,
+        remarks: 'Assigned by admin'
       });
     });
 
     await batch.commit();
+    return true;
   },
 
   addManualTORRecords: async (studentId, entries) => {
@@ -85,5 +76,6 @@ export const evaluationService = {
     });
 
     await batch.commit();
+    return true;
   }
 };

@@ -1,26 +1,50 @@
-import { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Search, Filter, Loader2 } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
+import { studentService } from '../../../services/studentService';
 
 export default function StudentAssignedSubjectsPage() {
-  // 1. Core State Management matching your screenshot table data exactly
-  const [subjects] = useState([
-    { code: 'CS301', name: 'Data Structures & Algorithms', instructor: 'Dr. Elena Marquez', units: 3, status: 'Completed' },
-    { code: 'CS305', name: 'Database Management Systems', instructor: 'Prof. Miguel Santos', units: 3, status: 'Completed' },
-    { code: 'CS310', name: 'Operating Systems', instructor: 'Dr. Anna Reyes', units: 3, status: 'Pending' },
-    { code: 'CS315', name: 'Software Engineering', instructor: 'Prof. Carlo Villanueva', units: 3, status: 'Assigned' },
-    { code: 'GE102', name: 'Ethics and Society', instructor: 'Prof. Ramon Cruz', units: 3, status: 'Assigned' },
-    { code: 'MATH204', name: 'Discrete Mathematics', instructor: 'Dr. Liza Fernandez', units: 3, status: 'Assigned' }
-  ]);
-
-  // 2. Interactive Search Query State
+  const { user } = useAuth();
+  const [subjects, setSubjects] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // 3. Real-time Search Processing
-  const filteredSubjects = subjects.filter(subject => 
+  useEffect(() => {
+    const fetchRecords = async () => {
+      if (!user?.uid) return;
+      try {
+        setLoading(true);
+        const { currentSubjects } = await studentService.getAcademicRecords(user.uid);
+        setSubjects(currentSubjects.map((record) => ({
+          code: record.subjectCode,
+          name: record.subjectCode,
+          instructor: 'Faculty Assigned',
+          units: 3,
+          status: record.status
+        })));
+      } catch (error) {
+        console.error('Failed to load assigned subjects', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecords();
+  }, [user]);
+
+  const filteredSubjects = subjects.filter((subject) =>
     subject.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     subject.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
     subject.instructor.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="animate-spin text-[#375534]" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 text-[#0F2A1D]">

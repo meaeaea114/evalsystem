@@ -4,32 +4,32 @@ import { studentService } from '../../../services/studentService';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function StudentDashboardTab() {
-  const { currentUser } = useAuth();
-  
+  const { user, profile } = useAuth();
+
   const [currentSubjects, setCurrentSubjects] = useState([]);
   const [completedHistory, setCompletedHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStudentData = async () => {
-      if (!currentUser?.uid) return; 
+      if (!user?.uid) return;
 
       try {
         setLoading(true);
-        const { currentSubjects: active, completedHistory: history } = 
-          await studentService.getAcademicRecords(currentUser.uid);
-        
+        const { currentSubjects: active, completedHistory: history } =
+          await studentService.getAcademicRecords(user.uid);
+
         setCurrentSubjects(active);
         setCompletedHistory(history);
       } catch (error) {
-        console.error("Failed to load student data", error);
+        console.error('Failed to load student data', error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchStudentData();
-  }, [currentUser]);
+  }, [user]);
 
   if (loading) {
     return (
@@ -39,7 +39,7 @@ export default function StudentDashboardTab() {
     );
   }
 
-  const totalEarnedUnits = completedHistory.length * 3; 
+  const totalEarnedUnits = completedHistory.length * 3;
   const completionPercentage = Math.min(Math.round((totalEarnedUnits / 180) * 100), 100);
 
   return (
@@ -49,7 +49,7 @@ export default function StudentDashboardTab() {
         <div>
           <h2 className="text-4xl font-serif font-black text-[#0F2A1D] tracking-tight">Academic Overview</h2>
           <p className="text-xs text-slate-400 font-bold mt-1.5 flex items-center gap-2">
-            Your live progress tracker
+            {profile?.name || user?.displayName || 'Student'} • {profile?.program || profile?.course || 'BSIT'} • {profile?.yearSection || `${profile?.year || '1'}st Year`}
           </p>
         </div>
       </div>

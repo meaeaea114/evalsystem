@@ -94,20 +94,24 @@ export default function AdminEvaluationPage() {
   // 4. Submit Batch Assignments
   const handleDispatchAssignments = async (e) => {
     e.preventDefault();
-    if (selectedSubjectsToAssign.length === 0) return alert("Select at least one subject.");
+    const studentId = selectedStudentId.trim();
+    if (!studentId) return alert('Please select a student first.');
+    if (selectedSubjectsToAssign.length === 0) return alert('Select at least one subject.');
 
     setIsSubmitting(true);
     try {
-      await evaluationService.dispatchMultipleAssignments(selectedStudentId, selectedSubjectsToAssign);
-      const selectedStudent = students.find((student) => student.id === selectedStudentId);
+      await evaluationService.dispatchMultipleAssignments(studentId, selectedSubjectsToAssign);
+      const selectedStudent = students.find((student) => student.id === studentId);
       setSummaryData({
-        studentName: selectedStudent?.name || selectedStudentId,
+        studentName: selectedStudent?.name || studentId,
         subjects: selectedSubjectsToAssign
       });
+      setSelectedSubjectsToAssign([]);
       setIsSummaryView(true);
+      await loadPageData();
     } catch (error) {
-      console.error("Error assigning subjects:", error);
-      alert("Failed to assign subjects. Check console.");
+      console.error('Error assigning subjects:', error);
+      alert('Failed to assign subjects. Check console.');
     } finally {
       setIsSubmitting(false);
     }

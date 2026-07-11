@@ -1,30 +1,62 @@
 import { db } from './firebase';
-import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 
 export const studentService = {
-  // Get main profile data
   getProfile: async (studentId) => {
     const docRef = doc(db, 'students', studentId);
     const snap = await getDoc(docRef);
     return snap.exists() ? { id: snap.id, ...snap.data() } : null;
   },
 
-  // Get active assignments and historical grades
+  createStudentProfile: async (studentId, payload = {}) => {
+    const docId = payload.docId || studentId;
+    const docRef = doc(db, 'students', docId);
+    const profile = {
+      id: payload.id || payload.studentId || studentId,
+      studentId: payload.studentId || payload.id || studentId,
+      name: payload.name || '',
+      email: payload.email || '',
+      course: payload.course || payload.program || 'BSIT',
+      program: payload.program || payload.course || 'BSIT',
+      year: payload.year || '1',
+      status: 'active',
+      createdAt: serverTimestamp(),
+      ...payload
+    };
+    await setDoc(docRef, profile, { merge: true });
+    return { id: docId, ...profile };
+  },
+
+  updateStudentProfile: async (studentId, updates) => {
+    const docRef = doc(db, 'students', studentId);
+    const normalizedUpdates = {
+      ...updates,
+      updatedAt: serverTimestamp()
+    };
+    await updateDoc(docRef, normalizedUpdates);
+    return { id: studentId, ...normalizedUpdates };
+  },
+
+  deleteStudentProfile: async (studentId) => {
+    const docRef = doc(db, 'students', studentId);
+    await deleteDoc(docRef);
+  },
+
   getAcademicRecords: async (studentId) => {
     const recordsRef = collection(db, 'evaluations');
-    const q = query(recordsRef, where("studentId", "==", studentId));
+    const q = query(recordsRef, where('studentId', '==', studentId));
     const snapshot = await getDocs(q);
-    
-    const allRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    // Group active assignments
-    const currentSubjects = allRecords.filter(r => 
-      r.status === 'Assigned' || r.status === 'Pending Pre-req' || r.status === 'Pending'
+
+    const allRecords = snapshot.docs
+      .map((recordDoc) => ({ id: recordDoc.id, ...recordDoc.data() }))
+      .sort((a, b) => new Date(b.assignedDate || 0) - new Date(a.assignedDate || 0));
+
+    const currentSubjects = allRecords.filter((r) =>
+      ['Assigned', 'Pending Pre-req', 'Pending'].includes(r.status)
     );
-    
-    // Group historical completions
-    const completedHistory = allRecords.filter(r => 
-      r.status === 'Passed' || r.status === 'Failed' || r.status === 'Excellent' || r.status === 'Completed'
+
+    const completedHistory = allRecords.filter((r) =>
+      ['Passed', 'Failed', 'Excellent', 'Completed'].includes(r.status)
     );
 
     return { currentSubjects, completedHistory };
@@ -33,6 +65,6 @@ export const studentService = {
   getAllStudents: async () => {
     const studentsRef = collection(db, 'students');
     const snapshot = await getDocs(studentsRef);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+    return snapshot.docs.map((studentDoc) => ({ id: studentDoc.id, ...studentDoc.data() }));
+  }
 };

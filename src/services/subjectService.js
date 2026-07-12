@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 export const subjectService = {
   // Fetch all new curriculum subjects
@@ -29,5 +29,24 @@ export const subjectService = {
     });
     
     return mappingDict;
+  },
+
+  // Add a new subject to Firestore
+  addSubject: async (subjectData) => {
+    const { id, ...data } = subjectData;
+    const docRef = doc(db, 'subjects', id.toUpperCase());
+    await setDoc(docRef, data);
+    return { id: id.toUpperCase(), ...data };
+  },
+
+  deleteSubject: async (subjectId) => {
+    try {
+      const docRef = doc(db, 'subjects', subjectId);
+      await deleteDoc(docRef);
+      return true;
+    } catch (error) {
+      console.error("Error deleting subject:", error);
+      throw error;
+    }
   }
 };

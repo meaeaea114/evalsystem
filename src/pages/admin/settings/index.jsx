@@ -1,39 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   User, 
   Calendar, 
   Bell, 
   ShieldCheck, 
   Save, 
-  CheckCircle2 
+  CheckCircle2,
+  Loader2
 } from 'lucide-react';
+// CRITICAL: Ensure this path correctly points to your services folder
+import { systemService } from '../../../services/systemService';
 
 export default function AdminSettingsPage() {
-  // 1. Navigation State for Settings Sub-tabs
   const [activeSubTab, setActiveSubTab] = useState('General');
 
-  // 2. Functional States for General Settings Form
+  // --- GENERAL SETTINGS STATES ---
   const [generalInfo, setGeneralInfo] = useState({
     universityName: 'The Last Salle University',
     shortName: 'TLSU',
     contactEmail: 'admin@tlsu.edu'
   });
-
-  // 3. Functional States for Display Toggles
   const [displaySettings, setDisplaySettings] = useState({
     compactTable: true,
     showActivityFeed: true
   });
+  const [saveSuccessGeneral, setSaveSuccessGeneral] = useState(false);
 
-  // 4. Academic Year Management States
+  // --- ACADEMIC CONFIG STATES ---
   const [academicConfig, setAcademicConfig] = useState({
     activeYear: '2026-2027',
     activeSemester: '1st Semester'
   });
+  const [isLoadingAcademic, setIsLoadingAcademic] = useState(true);
+  const [isSavingAcademic, setIsSavingAcademic] = useState(false);
+  const [saveSuccessAcademic, setSaveSuccessAcademic] = useState(false);
 
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  // Fetch the live academic config from Firebase on mount
+  useEffect(() => {
+    let isMounted = true;
+    const fetchConfig = async () => {
+      try {
+        const config = await systemService.getAcademicConfig();
+        if (isMounted && config) {
+          setAcademicConfig({
+            activeYear: config.activeYear || '2026-2027',
+            activeSemester: config.activeSemester || '1st Semester'
+          });
+        }
+      } catch (error) {
+        console.error("Failed to load academic config", error);
+      } finally {
+        if (isMounted) setIsLoadingAcademic(false);
+      }
+    };
+    fetchConfig();
+    return () => { isMounted = false; };
+  }, []);
 
-  // Form Input Mutators
+  // --- HANDLERS ---
   const handleGeneralChange = (e) => {
     const { name, value } = e.target;
     setGeneralInfo(prev => ({ ...prev, [name]: value }));
@@ -43,13 +67,33 @@ export default function AdminSettingsPage() {
     setDisplaySettings(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const triggerSaveFeedback = (e) => {
+  const handleSaveGeneral = (e) => {
     e.preventDefault();
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+    setSaveSuccessGeneral(true);
+    setTimeout(() => setSaveSuccessGeneral(false), 3000);
   };
 
-  // Sub-Navigation Menu Configurations
+  // The fixed Academic Config Save Function
+  const handleSaveAcademicConfig = async (e) => {
+    e.preventDefault();
+    setIsSavingAcademic(true);
+    setSaveSuccessAcademic(false);
+    
+    try {
+      // Pushes the update to Firebase
+      await systemService.updateAcademicConfig(academicConfig);
+      
+      // Trigger success UI
+      setSaveSuccessAcademic(true);
+      setTimeout(() => setSaveSuccessAcademic(false), 3000);
+    } catch (error) {
+      console.error("Failed to update system config:", error);
+      alert("Failed to save! Check the browser console. You may need to update your Firestore security rules to allow writes to the 'system_settings' collection.");
+    } finally {
+      setIsSavingAcademic(false);
+    }
+  };
+
   const subNavItems = [
     { name: 'General', icon: <User size={16} /> },
     { name: 'Academic Year', icon: <Calendar size={16} /> },
@@ -59,7 +103,6 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6 text-[#0F2A1D]">
-      {/* Title Layout Header */}
       <div>
         <h2 className="text-3xl font-extrabold tracking-tight text-[#0F2A1D]">Settings</h2>
         <p className="text-xs text-slate-400 font-medium uppercase mt-1 tracking-wider">
@@ -67,10 +110,7 @@ export default function AdminSettingsPage() {
         </p>
       </div>
 
-      {/* Primary Structural Left-Nav Layout Frame */}
       <div className="flex flex-col md:flex-row gap-6 items-start">
-        
-        {/* Left Side: Sub-Tab Navigation Strip */}
         <nav className="w-full md:w-56 flex flex-col gap-1 shrink-0">
           {subNavItems.map((item) => {
             const isSubActive = activeSubTab === item.name;
@@ -91,17 +131,15 @@ export default function AdminSettingsPage() {
           })}
         </nav>
 
-        {/* Right Side: Dynamic Form Dashboard Frame Content */}
         <div className="flex-1 w-full space-y-6">
           {activeSubTab === 'General' && (
             <>
-              {/* Card Window Panel 1: General Information */}
               <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-5 relative">
                 <div>
                   <h3 className="text-base font-black text-slate-900 tracking-tight">General Information</h3>
                 </div>
 
-                <form onSubmit={triggerSaveFeedback} className="space-y-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                <form onSubmit={handleSaveGeneral} className="space-y-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="sm:col-span-2 space-y-2">
                       <label className="text-slate-400">University Name</label>
@@ -136,10 +174,9 @@ export default function AdminSettingsPage() {
                     />
                   </div>
 
-                  {/* Submission Row Actions */}
                   <div className="flex justify-between items-center pt-2">
                     <div className="w-2/3">
-                      {saveSuccess && (
+                      {saveSuccessGeneral && (
                         <div className="flex items-center gap-2 text-emerald-700 font-black normal-case text-xs animate-in fade-in duration-200">
                           <CheckCircle2 size={16} className="stroke-[2.5]" /> Changes saved successfully.
                         </div>
@@ -155,14 +192,12 @@ export default function AdminSettingsPage() {
                 </form>
               </div>
 
-              {/* Card Window Panel 2: Display Settings */}
               <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-6">
                 <div>
                   <h3 className="text-base font-black text-slate-900 tracking-tight">Display Settings</h3>
                 </div>
 
                 <div className="divide-y divide-slate-100 text-xs font-bold">
-                  {/* Compact Toggle Row */}
                   <div className="flex justify-between items-center pb-4">
                     <div className="space-y-0.5 max-w-[80%]">
                       <p className="text-sm font-bold text-slate-800 tracking-tight">Compact Table View</p>
@@ -179,7 +214,6 @@ export default function AdminSettingsPage() {
                     </button>
                   </div>
 
-                  {/* Activity Feed Toggle Row */}
                   <div className="flex justify-between items-center pt-4">
                     <div className="space-y-0.5 max-w-[80%]">
                       <p className="text-sm font-bold text-slate-800 tracking-tight">Show Activity Feed</p>
@@ -203,35 +237,54 @@ export default function AdminSettingsPage() {
           {activeSubTab === 'Academic Year' && (
             <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-sm space-y-4">
               <h3 className="text-base font-black text-slate-900 tracking-tight">Academic Year & Term Configuration</h3>
-              <div className="space-y-3 max-w-sm text-xs font-bold text-slate-500 uppercase tracking-wider">
-                <div className="space-y-1.5">
-                  <label className="text-slate-400">Target Academic Scope</label>
-                  <input 
-                    type="text" 
-                    value={academicConfig.activeYear}
-                    onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeYear: e.target.value }))}
-                    className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none"
-                  />
+              <p className="text-xs text-slate-500 mb-2">Controls the term filtering logic system-wide (e.g., eligible subject assignment scopes).</p>
+              
+              {isLoadingAcademic ? (
+                <div className="flex items-center gap-2 text-sm font-bold text-slate-400 py-4">
+                  <Loader2 className="animate-spin" size={16} /> Loading live configuration...
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-slate-400">Current active Semester</label>
-                  <select 
-                    value={academicConfig.activeSemester}
-                    onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeSemester: e.target.value }))}
-                    className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none"
-                  >
-                    <option value="1st Semester">1st Semester</option>
-                    <option value="2nd Semester">2nd Semester</option>
-                    <option value="Summer Term">Summer Term</option>
-                  </select>
-                </div>
-                <button 
-                  onClick={triggerSaveFeedback}
-                  className="bg-[#0F2A1D] text-[#E3EED4] text-[11px] px-4 py-2.5 rounded-xl uppercase tracking-wider hover:bg-[#375534] transition-colors mt-2"
-                >
-                  Save Academic Framework
-                </button>
-              </div>
+              ) : (
+                <form onSubmit={handleSaveAcademicConfig} className="space-y-4 max-w-sm text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400">Target Academic Scope (A.Y.)</label>
+                    <input 
+                      type="text" 
+                      value={academicConfig.activeYear}
+                      onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeYear: e.target.value }))}
+                      className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#375534]/20"
+                      placeholder="e.g. 2026-2027"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-slate-400">Current Active Semester</label>
+                    <select 
+                      value={academicConfig.activeSemester}
+                      onChange={(e) => setAcademicConfig(prev => ({ ...prev, activeSemester: e.target.value }))}
+                      className="w-full text-sm border border-slate-200 bg-slate-50 p-3 rounded-xl text-slate-800 font-bold focus:outline-none focus:ring-2 focus:ring-[#375534]/20"
+                    >
+                      <option value="1st Semester">1st Semester</option>
+                      <option value="2nd Semester">2nd Semester</option>
+                      <option value="Summer Term">Summer Term</option>
+                    </select>
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mt-4">
+                    <button 
+                      type="submit"
+                      disabled={isSavingAcademic}
+                      className="flex items-center justify-center gap-2 bg-[#0F2A1D] text-[#E3EED4] text-[11px] px-5 py-3 rounded-xl uppercase tracking-wider hover:bg-[#375534] transition-colors disabled:opacity-50"
+                    >
+                      {isSavingAcademic ? <Loader2 size={14} className="animate-spin" /> : 'Save Academic Framework'}
+                    </button>
+                    {saveSuccessAcademic && (
+                        <div className="flex items-center gap-1.5 text-emerald-700 font-black normal-case text-xs animate-in fade-in duration-200">
+                          <CheckCircle2 size={16} className="stroke-[2.5]" /> Saved
+                        </div>
+                    )}
+                  </div>
+                </form>
+              )}
             </div>
           )}
 
@@ -255,7 +308,6 @@ export default function AdminSettingsPage() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
